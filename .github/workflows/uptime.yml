@@ -3,7 +3,7 @@ name: uptime-check
 on:
   workflow_dispatch:
   schedule:
-    -cron: "*/5 * * * *"
+    - cron: "*/5 * * * *"
 
 permissions:
   contents: write
@@ -37,17 +37,15 @@ jobs:
             echo "{\"url\":\"$BASE_URL\",\"status\":\"$STATUS\",\"response_time_ms\":$TIME_MS,\"time\":\"$TIMESTAMP\"}"
           }
 
-          echo "[" > status.json
-
-          check "https://dj-matz.nl" >> status.json
-          echo "," >> status.json
-
-          check "https://nawijn.nl.eu.org" >> status.json
-          echo "," >> status.json
-
-          check "https://vishandelnawijn.nl" >> status.json
-
-          echo "]" >> status.json
+          {
+            echo "["
+            check "https://dj-matz.nl"
+            echo ","
+            check "https://nawijn.nl.eu.org"
+            echo ","
+            check "https://vishandelnawijn.nl"
+            echo "]"
+          } > status.json
 
       - name: Commit result
         run: |
