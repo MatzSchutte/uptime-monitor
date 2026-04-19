@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check sites
+      - name: Check sites (MCS.live)
         run: |
           check() {
             BASE_URL=$1
@@ -25,14 +25,14 @@ jobs:
             TIME_TOTAL=$(curl -s -o /dev/null -w "%{time_total}" --max-time 10 "$URL")
 
             TIME_MS=$(awk "BEGIN {print $TIME_TOTAL * 1000}")
+            TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S")
 
             if [ "$HTTP_CODE" = "200" ]; then
               STATUS="online"
             else
               STATUS="offline"
+              TIME_MS=0
             fi
-
-            TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S")
 
             echo "{\"url\":\"$BASE_URL\",\"status\":\"$STATUS\",\"response_time_ms\":$TIME_MS,\"time\":\"$TIMESTAMP\"}"
           }
@@ -53,5 +53,7 @@ jobs:
           git config user.email "bot@example.com"
 
           git add status.json
-          git commit -m "update status" || exit 0
-          git push
+
+          git commit -m "update status" || echo "no changes"
+
+          git push origin main
