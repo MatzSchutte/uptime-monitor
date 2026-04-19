@@ -11,30 +11,49 @@ permissions:
 jobs:
   check:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Check sites
         run: |
           check() {
-            URL=$1
-            STATUS=$(curl -L -o /dev/null -s -w "%{http_code}" $URL)
-            TIME=$(date -u +"%Y-%m-%d %H:%M:%S")
-            echo "{\"url\":\"$URL\",\"status\":\"$STATUS\",\"time\":\"$TIME\"}"
+            BASE_URL=$1
+            URL="$BASE_URL/MCS.live"
+
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "$URL")
+            TIME_TOTAL=$(curl -s -o /dev/null -w "%{time_total}" --max-time 10 "$URL")
+
+            TIME_MS=$(awk "BEGIN {print $TIME_TOTAL * 1000}")
+
+            if [ "$HTTP_CODE" = "200" ]; then
+              STATUS="online"
+            else
+              STATUS="offline"
+            fi
+
+            TIMESTAMP=$(date -u +"%Y-%m-%d %H:%M:%S")
+
+            echo "{\"url\":\"$BASE_URL\",\"status\":\"$STATUS\",\"response_time_ms\":$TIME_MS,\"time\":\"$TIMESTAMP\"}"
           }
 
           echo "[" > status.json
+
           check "https://dj-matz.nl" >> status.json
           echo "," >> status.json
+
           check "https://nawijn.nl.eu.org" >> status.json
           echo "," >> status.json
+
           check "https://vishandelnawijn.nl" >> status.json
+
           echo "]" >> status.json
 
       - name: Commit result
         run: |
           git config user.name "bot"
           git config user.email "bot@example.com"
+
           git add status.json
           git commit -m "update status" || exit 0
           git push
